@@ -104,14 +104,14 @@ int main (int argc, char **argv)
   iolib_init ();
 
   BBBIO_sys_Enable_GPIO (BBBIO_GPIO2);
-  BBBIO_GPIO_set_dir (BBBIO_GPIO2, 0, BBBIO_GPIO_PIN_6);
-  BBBIO_GPIO_low (BBBIO_GPIO2, BBBIO_GPIO_PIN_6);
+  BBBIO_GPIO_set_dir (BBBIO_GPIO2, 0, BBBIO_GPIO_PIN_8);
+  BBBIO_GPIO_low (BBBIO_GPIO2, BBBIO_GPIO_PIN_8);
 
   while (count--)
   {
-    BBBIO_GPIO_high (BBBIO_GPIO2, BBBIO_GPIO_PIN_6);
+    BBBIO_GPIO_high (BBBIO_GPIO2, BBBIO_GPIO_PIN_8);
     iolib_delay_ms (high);
-    BBBIO_GPIO_low (BBBIO_GPIO2, BBBIO_GPIO_PIN_6);
+    BBBIO_GPIO_low (BBBIO_GPIO2, BBBIO_GPIO_PIN_8);
     iolib_delay_ms (low);
   }
 
