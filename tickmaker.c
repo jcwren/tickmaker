@@ -1,17 +1,13 @@
-//
-//  BBBiolib came from https://github.com/adwaitnd/BBBIOlib
-//
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include <limits.h>
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
-#include <sched.h>
 #include <stdarg.h>
-#include "BBBio_lib/BBBiolib.h"
 
 //
 //
@@ -44,8 +40,6 @@ static void usageAndExit (void)
   printf ("  <low time>  - Time in milliseconds GPIO6 is low (1..999)\n");
   printf ("  <count>     - Number of high/low cycles to perform (1..%d)\n", INT_MAX);
   printf ("\n");
-  printf ("Program must be run as root to achieve accurate timing\n");
-  printf ("\n");
 
   exit (1);
 }
@@ -70,7 +64,9 @@ int main (int argc, char **argv)
   int high;
   int low;
   int count;
-  struct sched_param param;
+  const char *gpio66Direction = "/sys/class/gpio/gpio66/direction";
+  const char *gpio66Value = "/sys/class/gpio/gpio66/value";
+  FILE *fp;
 
   (gProgramName = strrchr (argv [0], '/')) ? ++gProgramName : (gProgramName = argv [0]);
 
@@ -89,33 +85,33 @@ int main (int argc, char **argv)
   //
   //
   //
-  if (geteuid ())
-    errorAndExit ("Must be root to run this program. Use -h for help\n");
+  if (!((fp = fopen (gpio66Direction, "wb"))))
+    errorAndExit ("Can't open '%s'\n", gpio66Direction);
 
-  memset (&param, 0, sizeof (param));
-  param.sched_priority = sched_get_priority_max (SCHED_RR);
-
-  if (sched_setscheduler (0, SCHED_RR, &param))
-    errorAndExit ("sched_setscheduler() failed, error %d/%s\n", errno, strerror (errno));
+  fprintf (fp, "out");
+  fclose (fp);
 
   //
   //
   //
-  iolib_init ();
-
-  BBBIO_sys_Enable_GPIO (BBBIO_GPIO2);
-  BBBIO_GPIO_set_dir (BBBIO_GPIO2, 0, BBBIO_GPIO_PIN_8);
-  BBBIO_GPIO_low (BBBIO_GPIO2, BBBIO_GPIO_PIN_8);
-
   while (count--)
   {
-    BBBIO_GPIO_high (BBBIO_GPIO2, BBBIO_GPIO_PIN_8);
-    iolib_delay_ms (high);
-    BBBIO_GPIO_low (BBBIO_GPIO2, BBBIO_GPIO_PIN_8);
-    iolib_delay_ms (low);
+    if (!((fp = fopen (gpio66Value, "wb"))))
+      errorAndExit ("Can't open '%s'\n", gpio66Direction);
+    fprintf (fp, "1");
+    fclose (fp);
+
+    usleep ((high * 1000) - 600);
+
+    if (!((fp = fopen (gpio66Value, "wb"))))
+      errorAndExit ("Can't open '%s'\n", gpio66Direction);
+    fprintf (fp, "0");
+    fclose (fp);
+
+    usleep ((low * 1000) - 600);
   }
 
-  iolib_free ();
+  fclose (fp);
 
   exit (0);
 }
